@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Native Check</title>
+<meta name="theme-color" content="#0E6170" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1316" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Native Check">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap">
+<style>
+/* Layout: one-column phone app, a proofreader's desk: your text is set like a manuscript, marks sit under the words, tab bar at the thumb. */
+:root{
+  --bg:#F2F4F5; --surface:#FFFFFF; --sunk:#E8ECEE; --ink:#151D24; --muted:#5A6672; --line:#D6DDE2;
+  --accent:#0E6170; --accent-ink:#FFFFFF; --accent-soft:#DCEEF0;
+  --err:#C0392B; --err-soft:#FBE4E1; --unn:#A86A0C; --unn-soft:#FBEFD9; --upg:#2B7A4B; --upg-soft:#E0F2E7;
+  --spk:#6B44B8; --spk-soft:#ECE5F8;
+  --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-ui:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:12px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#0E1316; --surface:#161E23; --sunk:#1D272D; --ink:#E5EAED; --muted:#93A0AA; --line:#28343B;
+  --accent:#58B7C4; --accent-ink:#0B1A1D; --accent-soft:#16343A;
+  --err:#F0786C; --err-soft:#3A1E1C; --unn:#E8B451; --unn-soft:#352915; --upg:#62C48D; --upg-soft:#173022;
+  --spk:#B79AF0; --spk-soft:#2B2340; color-scheme:dark }}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(84px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-block:14px 8px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:600}
+h2{font-size:1.45rem;line-height:1.2}
+h3{font-size:1.1rem}
+p{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[role=button]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:0;border-radius:999px;padding:11px 18px;background:var(--accent);color:var(--accent-ink);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn.quiet{background:var(--sunk);color:var(--ink)}
+.btn.block{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.seg{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:600;background:var(--sunk);color:var(--muted)}
+.chip.err{background:var(--err-soft);color:var(--err)} .chip.unn{background:var(--unn-soft);color:var(--unn)} .chip.upg{background:var(--upg-soft);color:var(--upg)} .chip.spk{background:var(--spk-soft);color:var(--spk)}
+.banner{background:var(--unn-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.88rem}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.25rem;letter-spacing:-.01em}
+.brand span{color:var(--accent)}
+.level{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.iconbtn{border:0;background:var(--sunk);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+.iconbtn svg{width:20px;height:20px}
+input[type=text],input[type=password],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--surface);color:var(--ink);font:inherit;min-width:0}
+ol.steps{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+
+/* practice */
+.task{border-left:3px solid var(--accent);padding:2px 0 2px 12px}
+.task .t{font-family:var(--f-display);font-size:1.12rem;line-height:1.4}
+.scen{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.scen::-webkit-scrollbar{display:none}
+.scen button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:.85rem;white-space:nowrap}
+.scen button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+textarea{width:100%;min-height:190px;resize:vertical;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);
+  padding:14px;font-family:var(--f-display);font-size:1.08rem;line-height:1.6}
+.recorder{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 16px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.recbtn{width:92px;height:92px;border-radius:50%;border:0;background:var(--err);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 0 color-mix(in srgb,var(--err) 40%,transparent);transition:box-shadow .15s}
+.recbtn svg{width:38px;height:38px}
+.recbtn.live{background:var(--ink);color:var(--bg)}
+.timer{font-variant-numeric:tabular-nums;font-size:1.6rem;font-family:var(--f-display);font-weight:600}
+.meter{width:100%;max-width:280px;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--err);transition:width .08s}
+.hist{display:flex;flex-direction:column}
+.hist button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.hist button:first-child{border-top:0}
+.hist .ex{font-family:var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hist .meta{font-size:.78rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+
+/* feedback */
+.manuscript{font-family:var(--f-display);font-size:1.14rem;line-height:2.05;white-space:pre-wrap;overflow-wrap:anywhere}
+.mk{cursor:pointer;border-radius:3px;padding:1px 1px;text-decoration-thickness:2px;text-underline-offset:5px}
+.mk.err{text-decoration:underline wavy var(--err);background:var(--err-soft)}
+.mk.unn{text-decoration:underline dotted var(--unn);text-decoration-thickness:3px;background:var(--unn-soft)}
+.mk.upg{text-decoration:underline dashed var(--upg);background:var(--upg-soft)}
+.mk.spk{text-decoration:underline double var(--spk);background:var(--spk-soft)}
+.mk.off{background:transparent;text-decoration:line-through var(--muted);color:var(--muted)}
+.legend{display:flex;gap:8px;flex-wrap:wrap}
+.ilist{display:flex;flex-direction:column}
+.irow{all:unset;cursor:pointer;display:grid;grid-template-columns:10px 1fr;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.irow:first-child{border-top:0}
+.irow .dot{width:10px;height:10px;border-radius:50%;margin-top:7px}
+.dot.err{background:var(--err)} .dot.unn{background:var(--unn)} .dot.upg{background:var(--upg)} .dot.spk{background:var(--spk)} .dot.off{background:var(--line)}
+.irow .fix{font-family:var(--f-display);min-width:0;overflow-wrap:anywhere}
+.irow .fix s{color:var(--muted)}
+.irow .pat{font-size:.78rem;color:var(--muted)}
+.verdict{font-family:var(--f-display);font-size:1.05rem;line-height:1.5}
+details.native summary{cursor:pointer;font-weight:600;color:var(--accent);list-style:none}
+details.native summary::-webkit-details-marker{display:none}
+details.native p{font-family:var(--f-display);font-size:1.06rem;line-height:1.65;margin-top:10px;white-space:pre-wrap}
+.ok{display:flex;gap:10px;align-items:center;color:var(--upg);font-weight:600}
+.scores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.score{background:var(--spk-soft);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.score b{font-family:var(--f-display);font-size:1.5rem;color:var(--spk);font-variant-numeric:tabular-nums;line-height:1.1}
+.score span{font-size:.74rem;color:var(--muted)}
+.ipa{font-family:"Doulos SIL","Charis SIL","Lucida Sans Unicode","Arial Unicode MS",var(--f-display)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,15,18,.45);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:18px 18px 0 0;max-height:84vh;overflow-y:auto;
+  padding:10px max(18px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+.sheet .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 6px}
+.fixline{font-family:var(--f-display);font-size:1.2rem;line-height:1.5;overflow-wrap:anywhere}
+.fixline s{color:var(--muted);text-decoration-color:var(--err)}
+.fixline b{color:var(--upg)}
+.box{background:var(--sunk);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.box .eyebrow{font-size:.68rem}
+.alt{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:.92rem;align-items:baseline}
+.alt i{font-family:var(--f-display);font-style:italic;font-size:1rem}
+.answer{font-size:.92rem;white-space:pre-wrap;border-left:3px solid var(--accent);padding-left:10px}
+
+/* collection */
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:.76rem;color:var(--muted)}
+.phr{display:flex;flex-direction:column;gap:4px;padding:13px 0;border-top:1px solid var(--line)}
+.phr:first-child{border-top:0}
+.phr .p{font-family:var(--f-display);font-weight:700;font-size:1.08rem}
+.phr .ex{font-family:var(--f-display);font-style:italic;color:var(--muted)}
+.lvl{display:inline-flex;gap:3px}
+.lvl i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.lvl i.on{background:var(--accent)}
+.linkbtn{border:0;background:none;color:var(--muted);font-size:.8rem;padding:2px 0;text-decoration:underline}
+.linkbtn.danger{color:var(--err)}
+.idiom{border:1.5px solid var(--accent);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px}
+.idiom .p{font-family:var(--f-display);font-weight:700;font-size:1.3rem}
+.idiom .ex{font-family:var(--f-display);font-style:italic}
+
+/* progress */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.heat{display:grid;grid-template-columns:auto repeat(8,1fr);gap:4px;font-size:.68rem;color:var(--muted);align-items:center}
+.heat i{aspect-ratio:1;max-width:100%;border-radius:3px;background:var(--sunk);display:block}
+.heat i.l1{background:color-mix(in srgb,var(--accent) 30%,var(--sunk))}
+.heat i.l2{background:color-mix(in srgb,var(--accent) 60%,var(--sunk))}
+.heat i.l3{background:var(--accent)}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-ui);font-size:10px}
+.key{display:flex;gap:14px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.key i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.pcard{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.pcard .name{font-family:var(--f-display);font-weight:700;font-size:1.05rem}
+.status{font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.st-new{background:var(--err-soft);color:var(--err)} .st-train{background:var(--unn-soft);color:var(--unn)}
+.st-impr{background:var(--accent-soft);color:var(--accent)} .st-done{background:var(--upg-soft);color:var(--upg)}
+.bars{display:flex;gap:4px;align-items:flex-end;height:34px}
+.bars i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+.bars i.zero{background:var(--line)}
+.bars.spk i{background:var(--spk)} .bars.spk i.zero{background:var(--line)}
+.mrow{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;padding:8px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.mrow:first-child{border-top:0}
+.assess{font-family:var(--f-display);font-size:1.02rem;line-height:1.6;white-space:pre-wrap}
+.empty{text-align:center;padding:26px 12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;justify-content:center}
+nav.tabs .in{display:grid;grid-template-columns:repeat(3,1fr);max-width:520px;width:100%}
+nav.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:.74rem;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+nav.tabs svg{width:22px;height:22px}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation-duration:2.5s}.meter i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="top">
+    <div><div class="brand">Native<span>Check</span></div><div class="level">C1 → C2 · <span id="variantLbl">British English</span></div></div>
+    <button class="iconbtn" id="gear" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+  <div id="banners" class="stack"></div>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Bereiche"><div class="in">
+  <button data-tab="practice" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>Üben</button>
+  <button data-tab="collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Sammlung</button>
+  <button data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15l4-5 3 3 5-6"/></svg>Fortschritt</button>
+</div></nav>
+
+<script>
+(function(){
+"use strict";
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+function h(tag,props,...kids){const el=document.createElement(tag);
+  for(const [k,v] of Object.entries(props||{})){ if(v==null||v===false)continue;
+    if(k==="class")el.className=v; else if(k.startsWith("on"))el.addEventListener(k.slice(2),v);
+    else if(k==="html")el.innerHTML=v; else el.setAttribute(k,v===true?"":v);}
+  for(const c of kids.flat()){ if(c==null||c===false)continue; el.append(c instanceof Node?c:String(c)); }
+  return el;}
+const DAY=864e5;
+const fmtDate=ts=>new Date(ts).toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+const fmtDT=ts=>new Date(ts).toLocaleString("de-CH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const words=t=>((t||"").match(/[A-Za-z’']+/g)||[]);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function ls(k,v){try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){return null}}
+const spinner=()=>h("span",{class:"spin","aria-hidden":"true"});
+const SEV={error:{c:"err",l:"Fehler"},unnatural:{c:"unn",l:"Unnatürlich"},upgrade:{c:"upg",l:"Upgrade"},speech:{c:"spk",l:"Aussprache"}};
+const CAT={grammar:"Grammatik",word_choice:"Wortwahl",collocation:"Kollokation",register:"Register / Ton",idiom:"Redewendung",spelling:"Rechtschreibung",punctuation:"Zeichensetzung",style:"Stil",pronunciation:"Aussprache",intonation:"Betonung / Melodie",fluency:"Flüssigkeit"};
+const sevOf=i=>SEV[i.severity]||SEV.unnatural;
+const fmtSec=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+
+const SCEN={
+ everyday:[
+  ["Absage","Du kannst am Samstag nicht zum Geburtstagsessen eines Freundes kommen. Sag ab, entschuldige dich und schlag etwas anderes vor."],
+  ["Vermieter","Die Heizung in deiner Wohnung ist seit einer Woche kaputt. Beschwer dich höflich, aber bestimmt bei deinem Vermieter."],
+  ["Smalltalk","Du bist auf einer Party. Erzähl jemandem Neuem, was du beruflich machst und was du letztes Wochenende erlebt hast."],
+  ["Reklamation","Im Restaurant hast du das falsche Gericht bekommen und es ist kalt. Sprich es freundlich beim Kellner an."],
+  ["Geplatzter Plan","Erzähl von einem Plan, der kurzfristig geplatzt ist, und wie du damit umgegangen bist."],
+  ["Rat geben","Eine Freundin überlegt, ihren sicheren Job für ein Start-up zu kündigen. Gib ihr ehrlich deine Meinung."],
+  ["Urlaub","Beschreib deinen letzten Urlaub: was großartig war und was richtig schiefging."]],
+ business:[
+  ["Deadline","Ein Projekt verzögert sich um eine Woche. Erklär es dem Kunden, ohne unprofessionell zu wirken."],
+  ["Widersprechen","Im Meeting schlägt dein Chef eine Lösung vor, die du für falsch hältst. Widersprich höflich und begründe es."],
+  ["Pitch","Pitch ein Projekt oder eine Idee in etwa 60 Sekunden vor der Geschäftsleitung."],
+  ["Schlechte News","Das Budget deines Teams wurde um 20 % gekürzt. Informier dein Team darüber."],
+  ["Follow-up","Fass die Ergebnisse eines Meetings zusammen und nenn die nächsten Schritte."],
+  ["Feedback","Der Bericht eines Kollegen hatte mehrere Fehler. Gib ihm konstruktives Feedback."],
+  ["Vorstellung","Stell dich zu Beginn eines Calls mit einem neuen internationalen Team kurz vor."]]};
+
+/* ================= storage (IndexedDB, localStorage fallback) ================= */
+const Store={db:null,
+  open(){return new Promise(res=>{ try{ const r=indexedDB.open("nativecheck",1);
+      r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{this.db=r.result;res(true)}; r.onerror=()=>res(false); }catch(e){res(false)} });},
+  get(k){ if(!this.db){ try{const v=localStorage.getItem("nc:"+k); return Promise.resolve(v?JSON.parse(v):undefined);}catch(e){return Promise.resolve(undefined)} }
+    return new Promise(res=>{ try{ const q=this.db.transaction("kv").objectStore("kv").get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>res(undefined);}catch(e){res(undefined)} });},
+  set(k,v){ if(!this.db){ try{ if(v instanceof Blob) return Promise.resolve(false); localStorage.setItem("nc:"+k,JSON.stringify(v)); return Promise.resolve(true);}catch(e){return Promise.resolve(false)} }
+    return new Promise(res=>{ try{ const tx=this.db.transaction("kv","readwrite"); tx.objectStore("kv").put(v,k); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false);}catch(e){res(false)} });},
+  del(k){ if(!this.db){ try{localStorage.removeItem("nc:"+k);}catch(e){} return Promise.resolve(); }
+    return new Promise(res=>{ try{ const tx=this.db.transaction("kv","readwrite"); tx.objectStore("kv").delete(k); tx.oncomplete=()=>res(); tx.onerror=()=>res();}catch(e){res()} });}};
+
+/* ================= state ================= */
+const S={tab:"practice",mode:ls("nc_mode")||"write",ctx:ls("nc_ctx")||"everyday",scenIdx:null,customTask:null,
+  sessions:[],phrases:[],profile:{variant:"british",apiKey:"",model:"",models:[],audioIds:[]},
+  openSession:null,discoverCtx:"everyday",discovered:null,trainer:null,phrFilter:"all",busy:false,rec:null,lastAudio:null};
+async function persist(which){
+  if(!which||which==="sessions") await Store.set("sessions",S.sessions);
+  if(!which||which==="phrases") await Store.set("phrases",S.phrases);
+  if(!which||which==="profile") await Store.set("profile",S.profile);
+}
+async function saveSession(o){ const i=S.sessions.findIndex(x=>x.id===o.id); if(i>=0)S.sessions[i]=o; else S.sessions.unshift(o); S.sessions.sort((a,b)=>b.ts-a.ts); await persist("sessions"); }
+async function savePhrase(o){ const i=S.phrases.findIndex(x=>x.id===o.id); if(i>=0)S.phrases[i]=o; else S.phrases.unshift(o); await persist("phrases"); }
+async function deletePhrase(id){ S.phrases=S.phrases.filter(p=>p.id!==id); await persist("phrases"); }
+async function saveProfile(patch){ S.profile=Object.assign({},S.profile,patch); await persist("profile"); }
+async function keepAudio(id,blob){ if(!blob) return; const ok=await Store.set("audio:"+id,blob); if(!ok) return;
+  const ids=[id,...(S.profile.audioIds||[]).filter(x=>x!==id)]; const drop=ids.slice(15); for(const d of drop) await Store.del("audio:"+d);
+  await saveProfile({audioIds:ids.slice(0,15)}); }
+
+/* ================= Gemini ================= */
+const BASE="https://generativelanguage.googleapis.com/v1beta";
+const FALLBACK=["gemini-2.5-flash","gemini-2.5-flash-lite"];
+const variantName=()=>S.profile.variant==="american"?"American":"British";
+const accentName=()=>S.profile.variant==="american"?"General American":"modern Standard Southern British (RP)";
+function parseJSON(t){ t=(t||"").trim(); try{return JSON.parse(t);}catch(e){}
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(f){ try{return JSON.parse(f[1]);}catch(e){} }
+  const a=Math.min(...["{","["].map(c=>{const i=t.indexOf(c);return i<0?Infinity:i;})); const b=Math.max(t.lastIndexOf("}"),t.lastIndexOf("]"));
+  if(a<Infinity&&b>a) return JSON.parse(t.slice(a,b+1)); throw new Error("json"); }
+function modelOrder(){ const o=[]; const add=m=>{ if(m&&!o.includes(m)) o.push(m); };
+  add(S.profile.model); (S.profile.models||[]).forEach(add); FALLBACK.forEach(add); return o; }
+async function gemini(parts,{json=true,temperature=0.3,timeout=150000}={}){
+  const key=(S.profile.apiKey||"").trim(); if(!key) throw {code:"no_key"};
+  let lastErr={code:"other"};
+  for(const m of modelOrder()){
+    const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),timeout); let r;
+    try{ r=await fetch(`${BASE}/models/${encodeURIComponent(m)}:generateContent`,{method:"POST",signal:ctl.signal,
+        headers:{"Content-Type":"application/json","x-goog-api-key":key},
+        body:JSON.stringify({contents:[{role:"user",parts}],generationConfig:Object.assign({temperature},json?{responseMimeType:"application/json"}:{})})}); }
+    catch(e){ clearTimeout(tm); throw {code:e&&e.name==="AbortError"?"timeout":"network"}; }
+    clearTimeout(tm);
+    if(r.ok){ const d=await r.json().catch(()=>({})); const c=d.candidates&&d.candidates[0];
+      if(!c||!c.content){ lastErr={code:"blocked"}; continue; }
+      const t=(c.content.parts||[]).filter(p=>p.text&&!p.thought).map(p=>p.text).join("");
+      if(!json) return t; try{ const v=parseJSON(t); if(S.profile.lastModel!==m) saveProfile({lastModel:m}); return v; }catch(e){ lastErr={code:"invalid_json"}; continue; } }
+    const body=await r.json().catch(()=>({})); const msg=(body.error&&body.error.message)||"";
+    if((r.status===400&&/api key|API_KEY/i.test(msg))||r.status===401||r.status===403) throw {code:"bad_key",message:msg};
+    lastErr={code:r.status===429?"rate_limited":r.status===404?"no_model":r.status>=500?"server":"other",message:msg};
+    if(r.status===429||r.status===404||r.status>=500) continue;
+    throw lastErr;
+  }
+  throw lastErr;
+}
+async function discoverModels(key){
+  const r=await fetch(`${BASE}/models?pageSize=200`,{headers:{"x-goog-api-key":key}});
+  if(!r.ok){ const b=await r.json().catch(()=>({})); throw {code:(r.status===400||r.status===401||r.status===403)?"bad_key":"other",message:b.error&&b.error.message}; }
+  const d=await r.json();
+  const ms=(d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace(/^models\//,""))
+    .filter(n=>/^gemini-\d/.test(n)&&/flash/.test(n)&&!/(tts|live|image|embed|transcrib|audio|translate|robotics|computer|thinking-exp|8b)/.test(n));
+  const ver=n=>parseFloat((n.match(/^gemini-(\d+(?:\.\d+)?)/)||[])[1]||0);
+  const score=n=>ver(n)*10-(/lite/.test(n)?3:0)-(/(preview|exp)/.test(n)?1.5:0)-(/-\d{2,}$/.test(n)?0.5:0);
+  return [...new Set(ms)].sort((a,b)=>score(b)-score(a)).slice(0,6);
+}
+const ERRCOPY={no_key:"Es ist noch kein Gemini-Schlüssel hinterlegt. Tipp oben rechts auf das Zahnrad.",
+  bad_key:"Der Gemini-Schlüssel wird nicht akzeptiert. Prüf ihn in den Einstellungen.",
+  rate_limited:"Das Gratis-Kontingent ist gerade ausgeschöpft. Warte eine Minute oder probier es morgen wieder.",
+  no_model:"Kein passendes Gemini-Modell gefunden. Tipp in den Einstellungen auf „Modelle neu laden“.",
+  invalid_json:"Die Antwort kam unvollständig zurück. Versuch es nochmal.",network:"Keine Internetverbindung.",timeout:"Gemini hat zu lange gebraucht. Versuch es nochmal.",
+  server:"Gemini ist gerade überlastet. Versuch es gleich nochmal.",blocked:"Gemini hat keine Antwort geliefert. Formulier etwas um und versuch es nochmal."};
+const errText=e=>ERRCOPY[e&&e.code]||("Das hat nicht geklappt."+(e&&e.message?" ("+e.message.slice(0,140)+")":" Versuch es gleich nochmal."));
+const aiText=(prompt,opts)=>gemini([{text:prompt}],opts);
+
+/* ================= prompts ================= */
+const ISSUE_SCHEMA=`{"original":"exact substring copied character-for-character from the learner's text, as short as possible (just the words concerned)","severity":"error|unnatural|upgrade","category":"grammar|word_choice|collocation|register|idiom|spelling|punctuation|style","correction":"replacement for exactly that substring","explanation":"German, 1-3 sentences: why","rule":"German, the general rule if there is one, otherwise null","germanism":"German, if the mistake comes from German, name the German source, otherwise null","pattern":"short German label for the underlying recurring problem, reusable across texts, e.g. 'since vs. for', 'Präpositionen bei Zeitangaben', 'Zu direkter Ton im Business', 'make vs. do', 'Artikel', 'Present Perfect vs. Simple Past', 'Satzstellung (deutsch gedacht)'","everyday":"how a native would say this part casually, or null","business":"how a native would say this part professionally, or null"}`;
+const SEVERITY_RULES=`Find every issue a demanding native-speaker editor would flag. Be precise and strict, but NEVER invent problems: if something is correct and natural for this context, do not flag it. Severity:
+- "error": wrong grammar, wrong word, wrong preposition, or a collocation a native would not use.
+- "unnatural": grammatically possible but sounds translated, stiff, or the wrong register for the context.
+- "upgrade": acceptable, but a native would often say it more idiomatically (idiom, phrasal verb, colloquial phrase). Only genuinely useful upgrades, at most 4.`;
+const TAIL=`"context":"everyday|business",
+"verdict":"German, 1-2 honest sentences on the language of the whole text (not its content)",
+"native_version":"the whole text as a native speaker would naturally write/say it in this context, keeping the learner's meaning",
+"natural_ratio":number between 0 and 1 (share of sentences with no error/unnatural issue),
+"complexity":integer 1-5 (how ambitious the language is: structures, vocabulary range),
+"idioms_used":["idiomatic expressions the learner used correctly"]`;
+function writePrompt(text){
+return `You are a meticulous English coach helping a German-speaking learner (living in Switzerland) move from C1 to C2.
+Standard: ${variantName()} English. Treat the other variety's usage as "unnatural" only where it clashes with this standard, never as an "error".
+Work out the situation and register from the text itself (a casual chat, a work email, a meeting, a story ...). Judge grammar, word choice, collocations, spelling, punctuation and naturalness for exactly that situation. Do NOT judge content, length or ideas: only the language.
+
+Learner's text:
+"""
+${text}
+"""
+
+${SEVERITY_RULES}
+
+Reply with ONLY JSON:
+{"issues":[${ISSUE_SCHEMA}],
+${TAIL}}
+List issues in the order they appear. Each "original" must occur in the text exactly.`;}
+function speakPrompt(){
+return `You are a meticulous English coach and phonetician helping a German-speaking learner (living in Switzerland) move from C1 to C2. Listen to the attached recording of the learner speaking freely.
+
+STEP 1 – Transcribe VERBATIM exactly what the learner said, including grammar mistakes, wrong words, false starts, repetitions and filler words (um, uh). Do NOT correct, smooth or improve anything: the transcript must preserve their errors, because they are what we want to find. Use normal punctuation for readability.
+
+STEP 2 – Language: work out the situation and register from what was said. Judge grammar, word choice, collocations and naturalness as spoken ${variantName()} English for that situation. Ignore punctuation and spelling. Do not flag normal filler words unless they are excessive. Do NOT judge content, only the language.
+${SEVERITY_RULES}
+
+STEP 3 – Pronunciation, stress and intonation, judged against ${accentName()} as the target accent. Only flag what you can clearly hear; never guess. Typical German-speaker issues to listen for: th as s/z/t/d, w as v, final devoicing (bad → bat), vowel length and quality (ship/sheep, bed/bad), schwa in unstressed syllables, wrong word stress, flat or falling-rising intonation in the wrong places, choppy rhythm instead of stress-timing, missing linking. If the recording is too quiet or unclear, say so in speech_verdict and keep the pronunciation list short.
+
+Reply with ONLY JSON:
+{"transcript":"verbatim transcript",
+"issues":[${ISSUE_SCHEMA.replace("from the learner's text","from your transcript")}],
+"pronunciation":[{"word":"exact word or short phrase copied from your transcript","heard":"what it sounded like, in IPA between slashes if possible","target":"correct pronunciation in IPA between slashes for the target accent","explanation":"German, 1-2 sentences: what was off","tip":"German, concrete tip for mouth, tongue or lips","pattern":"short German label, reusable, e.g. 'th-Laut', 'w vs. v', 'Auslautverhärtung', 'Wortbetonung', 'Vokallänge'"}],
+"intonation":[{"phrase":"exact short phrase copied from your transcript","explanation":"German: what was off with stress, rhythm or melody","tip":"German: how a native would say it","pattern":"short German label, e.g. 'Satzmelodie bei Fragen', 'Satzbetonung', 'Rhythmus (abgehackt)', 'Monotone Sprechweise'"}],
+"scores":{"pronunciation":integer 1-10,"intonation":integer 1-10,"fluency":integer 1-10},
+"speech_verdict":"German, 1-2 honest sentences about pronunciation, intonation and fluency",
+${TAIL}}
+List issues in the order they appear. Each "original", "word" and "phrase" must occur in your transcript exactly.`;}
+
+/* ================= recorder (WAV 16 kHz mono) ================= */
+const Rec={
+  async start(){ const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const AC=window.AudioContext||window.webkitAudioContext; const ctx=new AC(); if(ctx.state==="suspended") await ctx.resume();
+    const src=ctx.createMediaStreamSource(stream); const proc=ctx.createScriptProcessor(4096,1,1); const chunks=[];
+    this.level=0; proc.onaudioprocess=e=>{ const d=e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d)); let s=0; for(let i=0;i<d.length;i+=8) s+=d[i]*d[i]; this.level=Math.sqrt(s/(d.length/8)); };
+    src.connect(proc); proc.connect(ctx.destination);
+    Object.assign(this,{stream,ctx,src,proc,chunks,t0:Date.now()}); },
+  async stop(){ if(!this.ctx) return null; try{this.src.disconnect();this.proc.disconnect();}catch(e){} this.stream.getTracks().forEach(t=>t.stop());
+    const rate=this.ctx.sampleRate; try{await this.ctx.close();}catch(e){}
+    const len=this.chunks.reduce((t,c)=>t+c.length,0); const all=new Float32Array(len); let o=0; this.chunks.forEach(c=>{all.set(c,o);o+=c.length;});
+    const pcm=downsample(all,rate,16000); const seconds=pcm.length/16000; this.ctx=null; this.chunks=[];
+    return {blob:encodeWAV(pcm,16000),seconds}; },
+  cancel(){ if(!this.ctx) return; try{this.src.disconnect();this.proc.disconnect();}catch(e){} this.stream.getTracks().forEach(t=>t.stop()); try{this.ctx.close();}catch(e){} this.ctx=null; this.chunks=[]; }};
+function downsample(buf,from,to){ if(from===to) return buf; const ratio=from/to, n=Math.floor(buf.length/ratio), out=new Float32Array(n);
+  for(let i=0;i<n;i++){ const a=Math.floor(i*ratio), b=Math.min(buf.length,Math.floor((i+1)*ratio)); let s=0; for(let j=a;j<b;j++) s+=buf[j]; out[i]=s/Math.max(1,b-a); } return out; }
+function encodeWAV(pcm,rate){ const b=new ArrayBuffer(44+pcm.length*2), v=new DataView(b); const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,"RIFF");v.setUint32(4,36+pcm.length*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,pcm.length*2,true);
+  let peak=0; for(let i=0;i<pcm.length;i++) peak=Math.max(peak,Math.abs(pcm[i])); const gain=peak>0&&peak<0.5?0.9/peak:1;
+  for(let i=0;i<pcm.length;i++){ const s=Math.max(-1,Math.min(1,pcm[i]*gain)); v.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true); }
+  return new Blob([b],{type:"audio/wav"}); }
+const blobToB64=blob=>new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob);});
+
+/* ================= speech synthesis ================= */
+function say(text){ try{ const ss=window.speechSynthesis; if(!ss) return; ss.cancel(); const u=new SpeechSynthesisUtterance(text);
+  const lang=S.profile.variant==="american"?"en-US":"en-GB"; u.lang=lang; u.rate=0.85;
+  const v=ss.getVoices().filter(v=>v.lang&&v.lang.replace("_","-").startsWith(lang)); if(v.length) u.voice=v.find(x=>/natural|enhanced|premium|google/i.test(x.name))||v[0];
+  ss.speak(u);}catch(e){} }
+try{ window.speechSynthesis&&window.speechSynthesis.getVoices(); }catch(e){}
+
+/* ================= locate marks ================= */
+function locate(text,issues){let pos=0;const placed=[],unplaced=[];
+  const order=issues.map((it,i)=>i);
+  order.forEach(i=>{const it=issues[i]; const o=(it.original||"").trim(); if(!o){unplaced.push(i);return;}
+    let idx=text.indexOf(o,pos); if(idx<0)idx=text.indexOf(o); if(idx<0)idx=text.toLowerCase().indexOf(o.toLowerCase());
+    if(idx<0||placed.some(p=>idx<p.end&&idx+o.length>p.start)){unplaced.push(i);return;}
+    placed.push({start:idx,end:idx+o.length,i}); if(it.severity!=="speech") pos=idx+o.length;});
+  placed.sort((a,b)=>a.start-b.start); return {placed,unplaced};}
+
+/* ================= render core ================= */
+function setTab(t){ if(S.rec) return; S.tab=t; if(t!=="practice") S.openSession=null;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===t?"page":"false")); render(); window.scrollTo(0,0);}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
+$("#gear").addEventListener("click",()=>setTab("settings"));
+function render(){ $("#variantLbl").textContent=S.profile.variant==="american"?"American English":"British English";
+  const v=$("#view"); v.replaceChildren(
+    S.tab==="settings"?settingsView():
+    !S.profile.apiKey&&S.tab==="practice"?setupView():
+    S.tab==="practice"?(S.openSession?feedbackView(S.openSession):practiceView()):
+    S.tab==="collection"?collectionView():progressView()); }
+
+/* ================= SETUP ================= */
+function setupView(){ return h("div",{class:"stack",style:"gap:16px"},
+  h("h2",null,"Willkommen"),
+  h("p",null,"Native Check prüft dein geschriebenes und gesprochenes Englisch wie ein strenger Muttersprachler, inklusive Aussprache und Betonung. Dafür nutzt die App Googles KI Gemini über dein kostenloses Kontingent."),
+  keyPanel(true)); }
+function keyPanel(first){
+  const inp=h("input",{type:"password",id:"apikey",placeholder:"AIza…",autocomplete:"off",spellcheck:"false",value:first?"":(S.profile.apiKey||"")});
+  const st=h("div",{class:"small",role:"status"});
+  const btn=h("button",{class:"btn",onclick:async()=>{ const k=inp.value.trim(); if(!k){st.textContent="Füg zuerst den Schlüssel ein.";return;}
+      btn.disabled=true; btn.replaceChildren(spinner(),"Prüfe Schlüssel …"); st.textContent="";
+      try{ const ms=await discoverModels(k); await saveProfile({apiKey:k,models:ms,model:S.profile.model&&ms.includes(S.profile.model)?S.profile.model:""});
+        st.textContent="Schlüssel funktioniert. "+(ms.length?"Modell: "+ms[0]:"Standardmodell wird benutzt."); setTimeout(()=>{ if(first){ setTab("practice"); } else render(); },700); }
+      catch(e){ st.textContent=errText(e); } btn.disabled=false; btn.replaceChildren(first?"Speichern und loslegen":"Schlüssel speichern"); }},first?"Speichern und loslegen":"Schlüssel speichern");
+  return h("section",{class:"panel"},h("h3",null,"Gemini-Schlüssel"),
+    first?h("ol",{class:"steps"},
+      h("li",null,"Öffne ",h("a",{href:"https://aistudio.google.com/apikey",target:"_blank",rel:"noopener"},"aistudio.google.com/apikey")," und melde dich mit deinem Google-Konto an."),
+      h("li",null,"Tipp auf „Create API key“ und kopier den Schlüssel."),
+      h("li",null,"Füg ihn hier ein. Er bleibt nur auf diesem Handy gespeichert.")):null,
+    inp,h("div",null,btn),st,
+    h("p",{class:"small muted"},"Kostenlos bleibt es, solange du in Google AI Studio keine Abrechnung aktivierst. Im Gratis-Kontingent darf Google deine Eingaben zur Verbesserung seiner Modelle nutzen, sprich also nichts sehr Privates ein.")); }
+
+/* ================= SETTINGS ================= */
+function settingsView(){
+  const sel=h("select",{id:"modelSel",onchange:e=>{saveProfile({model:e.target.value});}},
+    h("option",{value:""},"Automatisch (bestes verfügbares)"),
+    [...new Set([...(S.profile.models||[]),...FALLBACK])].map(m=>h("option",{value:m,selected:S.profile.model===m||null},m)));
+  const mst=h("div",{class:"small",role:"status"},S.profile.lastModel?"Zuletzt benutzt: "+S.profile.lastModel:"");
+  const reload=h("button",{class:"btn quiet",onclick:async()=>{ reload.disabled=true; mst.textContent="Lade …";
+    try{ const ms=await discoverModels(S.profile.apiKey); await saveProfile({models:ms}); render(); }catch(e){ mst.textContent=errText(e); reload.disabled=false; } }},"Modelle neu laden");
+  const fileIn=h("input",{type:"file",accept:"application/json,.json",hidden:true,onchange:async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ const d=JSON.parse(await f.text()); let ns=0,np=0;
+      (d.sessions||[]).forEach(s=>{ if(s&&s.id&&!S.sessions.some(x=>x.id===s.id)){S.sessions.push(s);ns++;} });
+      (d.phrases||[]).forEach(p=>{ if(p&&p.id&&!S.phrases.some(x=>x.id===p.id)){S.phrases.push(p);np++;} });
+      if(d.profile&&d.profile.assessment&&!S.profile.assessment) S.profile.assessment=d.profile.assessment;
+      S.sessions.sort((a,b)=>b.ts-a.ts); await persist(); bst.textContent=`Importiert: ${ns} Übungen, ${np} Wendungen.`; }
+    catch(err){ bst.textContent="Die Datei konnte nicht gelesen werden."; } }});
+  const bst=h("div",{class:"small",role:"status"});
+  const exportBtn=h("button",{class:"btn quiet",onclick:()=>{ const p=clone(S.profile); delete p.apiKey; delete p.audioIds;
+    const blob=new Blob([JSON.stringify({app:"native-check",version:1,exported:new Date().toISOString(),sessions:S.sessions,phrases:S.phrases,profile:p})],{type:"application/json"});
+    const a=h("a",{href:URL.createObjectURL(blob),download:"native-check-backup-"+new Date().toISOString().slice(0,10)+".json"}); document.body.append(a); a.click(); a.remove();
+    bst.textContent="Backup erstellt. Speichere es z. B. in deinen Dateien oder in der Cloud."; }},"Backup speichern");
+  return h("div",{class:"stack",style:"gap:16px"},
+    h("div",{class:"row between"},h("h2",null,"Einstellungen"),h("button",{class:"linkbtn",onclick:()=>setTab("practice")},"Fertig")),
+    h("section",{class:"panel"},h("h3",null,"Englisch-Standard"),
+      h("div",{class:"seg",style:"align-self:flex-start"},[["british","British"],["american","American"]].map(([k,l])=>h("button",{"aria-pressed":String(S.profile.variant===k),onclick:async()=>{await saveProfile({variant:k});render();}},l))),
+      h("p",{class:"small muted"},"Gilt für Grammatik, Wortwahl und die Ziel-Aussprache. British ist der Standard an Schweizer Schulen und bei den Cambridge-Prüfungen.")),
+    keyPanel(false),
+    h("section",{class:"panel"},h("h3",null,"KI-Modell"),sel,h("div",null,reload),mst,
+      h("p",{class:"small muted"},"Ist das Gratis-Kontingent eines Modells aufgebraucht, nimmt die App automatisch das nächste.")),
+    h("section",{class:"panel"},h("h3",null,"Deine Daten"),
+      h("p",{class:"small"},`Alles bleibt auf diesem Gerät: ${S.sessions.length} Übungen, ${S.phrases.length} Wendungen. Speichere ab und zu ein Backup, falls du das Handy wechselst oder Browserdaten löschst.`),
+      h("div",{class:"row"},exportBtn,h("button",{class:"btn quiet",onclick:()=>fileIn.click()},"Backup laden")),fileIn,bst));
+}
+
+/* ================= PRACTICE ================= */
+function currentTask(){ return S.customTask||(S.scenIdx!=null?SCEN[S.ctx][S.scenIdx][1]:null); }
+function practiceView(){
+  const seg=(vals,cur,on)=>h("div",{class:"seg",role:"group"},vals.map(([k,l])=>h("button",{"aria-pressed":String(cur===k),onclick:()=>on(k)},l)));
+  const scen=h("div",{class:"scen"},SCEN[S.ctx].map(([l],i)=>h("button",{"aria-pressed":String(!S.customTask&&S.scenIdx===i),onclick:()=>{S.customTask=null;S.scenIdx=S.scenIdx===i?null:i;render();}},l)));
+  const task=currentTask();
+  return h("div",{class:"stack",style:"gap:16px"},
+    seg([["write","Schreiben"],["speak","Sprechen"]],S.mode,k=>{ if(S.rec) return; S.mode=k;ls("nc_mode",k);S.lastAudio=null;render();}),
+    h("p",{class:"muted"},S.mode==="speak"?"Sprich frei auf Englisch, worüber du willst. Geprüft werden Grammatik, Wortwahl, Aussprache und Betonung.":"Schreib einfach los, worüber du willst. Geprüft wird nur deine Sprache, den Kontext erkennt die App selbst."),
+    h("div",{class:"stack",style:"gap:8px"},
+      h("div",{class:"row between"},h("span",{class:"eyebrow"},"Ideen, falls dir nichts einfällt"),
+        seg([["everyday","Alltag"],["business","Business"]],S.ctx,k=>{S.ctx=k;ls("nc_ctx",k);S.scenIdx=null;S.customTask=null;render();})),
+      scen),
+    task?h("div",{class:"task"},h("div",{class:"row between"},h("span",{class:"eyebrow"},S.customTask?"Gezielte Übung":"Idee"),
+      h("button",{class:"linkbtn",onclick:()=>{S.customTask=null;S.scenIdx=null;render();}},"Ausblenden")),h("p",{class:"t"},task)):null,
+    S.mode==="speak"?recorderPanel():writePanel(),
+    h("div",{id:"histWrap"},historyPanel()));
+}
+function writePanel(){
+  const ta=h("textarea",{id:"draft",placeholder:"Write in English …",spellcheck:"false",autocapitalize:"sentences"});
+  ta.value=ls("nc_draft")||""; const cnt=h("span",{class:"small muted"},words(ta.value).length+" Wörter");
+  ta.addEventListener("input",()=>{ls("nc_draft",ta.value);cnt.textContent=words(ta.value).length+" Wörter";});
+  const status=h("div",{class:"small",role:"status"});
+  const go=h("button",{class:"btn block",onclick:()=>analyseWrite(ta,go,status)},"Prüfen lassen");
+  return h("div",{class:"stack"},ta,h("div",{class:"row between"},cnt,h("button",{class:"linkbtn",onclick:()=>{ta.value="";ls("nc_draft","");cnt.textContent="0 Wörter";}},"Leeren")),go,status);
+}
+const MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const STOP='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+const MAXSEC=180;
+function recorderPanel(){
+  const timer=h("div",{class:"timer"},S.lastAudio?fmtSec(S.lastAudio.seconds):"0:00");
+  const meter=h("div",{class:"meter","aria-hidden":"true"},h("i"));
+  const status=h("div",{class:"small",role:"status"});
+  const label=h("div",{class:"small muted"},S.lastAudio?"Aufnahme bereit":"Tippen zum Aufnehmen · max. 3 Minuten");
+  const btn=h("button",{class:"recbtn","aria-label":"Aufnahme starten",html:MIC});
+  const audioEl=S.lastAudio?h("audio",{controls:true,src:S.lastAudio.url,style:"width:100%"}):null;
+  const go=h("button",{class:"btn block",hidden:!S.lastAudio||null,onclick:()=>analyseSpeech(go,status)},"Prüfen lassen");
+  const redo=h("button",{class:"linkbtn",hidden:!S.lastAudio||null,onclick:()=>{ if(S.lastAudio) URL.revokeObjectURL(S.lastAudio.url); S.lastAudio=null; render(); }},"Verwerfen und neu aufnehmen");
+  let tick=null;
+  btn.addEventListener("click",async()=>{
+    if(S.busy) return;
+    if(!S.rec){
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ status.textContent="Dein Browser erlaubt hier keine Aufnahmen. Öffne die App über https in Safari oder Chrome."; return; }
+      try{ await Rec.start(); }catch(e){ status.textContent=e&&e.name==="NotAllowedError"?"Mikrofon-Zugriff wurde abgelehnt. Erlaube ihn in den Einstellungen deines Browsers für diese Seite.":"Das Mikrofon konnte nicht gestartet werden."; return; }
+      if(S.lastAudio){ URL.revokeObjectURL(S.lastAudio.url); S.lastAudio=null; }
+      S.rec=true; btn.classList.add("live"); btn.innerHTML=STOP; btn.setAttribute("aria-label","Aufnahme stoppen"); label.textContent="Aufnahme läuft · tippen zum Stoppen"; status.textContent="";
+      go.hidden=true; redo.hidden=true; if(audioEl) audioEl.remove();
+      tick=setInterval(()=>{ const s=(Date.now()-Rec.t0)/1000; timer.textContent=fmtSec(s); meter.firstChild.style.width=Math.min(100,Rec.level*350)+"%"; if(s>=MAXSEC) btn.click(); },100);
+    } else {
+      clearInterval(tick); S.rec=false; const r=await Rec.stop(); meter.firstChild.style.width="0";
+      if(!r||r.seconds<2){ status.textContent="Die Aufnahme war zu kurz. Sprich mindestens ein paar Sätze."; render(); return; }
+      S.lastAudio={blob:r.blob,url:URL.createObjectURL(r.blob),seconds:r.seconds}; render();
+    }
+  });
+  return h("div",{class:"stack"},h("div",{class:"recorder"},btn,timer,meter,label,audioEl,redo),go,status);
+}
+function historyPanel(){ if(!S.sessions.length) return h("div");
+  return h("section",{class:"panel"},h("div",{class:"eyebrow"},"Letzte Übungen"),
+    h("div",{class:"hist"},S.sessions.slice(0,12).map(s=>{const iss=(s.issues||[]).filter(i=>!i.disputed);
+      const e=iss.filter(i=>i.severity==="error").length,u=iss.filter(i=>i.severity==="unnatural").length,p=iss.filter(i=>i.severity==="speech").length;
+      return h("button",{onclick:()=>{S.openSession=s;render();window.scrollTo(0,0);}},
+        h("span",{class:"ex"},s.text),
+        h("span",{class:"meta"},h("span",null,fmtDT(s.ts)),h("span",null,s.mode==="speak"?"Gesprochen":"Geschrieben"),h("span",null,s.ctx==="business"?"Business":"Alltag"),
+          h("span",null,`${e} Fehler · ${u} unnatürlich`+(s.mode==="speak"?` · ${p} Aussprache`:""))));})));}
+
+function normIssues(arr){ return (Array.isArray(arr)?arr:[]).filter(i=>i&&i.original).map(i=>({
+  original:String(i.original),severity:["error","unnatural","upgrade"].includes(i.severity)?i.severity:"unnatural",category:CAT[i.category]?i.category:"style",correction:String(i.correction??""),
+  explanation:i.explanation||"",rule:i.rule||null,germanism:i.germanism||null,pattern:String(i.pattern||"Sonstiges").trim(),everyday:i.everyday||null,business:i.business||null})); }
+function buildSession(r,text,mode){ return {id:uid("s"),ts:Date.now(),mode,ctx:r.context==="business"?"business":"everyday",task:currentTask(),text,wordCount:words(text).length,
+  issues:normIssues(r.issues),verdict:r.verdict||"",native:r.native_version||"",natural:Math.max(0,Math.min(1,Number(r.natural_ratio)||0)),
+  complexity:Math.max(1,Math.min(5,Math.round(Number(r.complexity)||3))),idioms:Array.isArray(r.idioms_used)?r.idioms_used.slice(0,10):[]}; }
+async function finish(s){ markPhraseUse(s.text); await saveSession(s); S.busy=false; S.openSession=s; S.customTask=null; S.scenIdx=null; render(); window.scrollTo(0,0); }
+async function analyseWrite(ta,btn,status){
+  const text=ta.value.trim(); if(words(text).length<5){status.textContent="Schreib mindestens einen ganzen Satz.";return;}
+  S.busy=true; btn.disabled=true; btn.replaceChildren(spinner(),"Wird geprüft …"); status.textContent="Das dauert meist 10 bis 40 Sekunden.";
+  try{ const r=await aiText(writePrompt(text)); const s=buildSession(r,text,"write"); ls("nc_draft",""); await finish(s); }
+  catch(e){ S.busy=false; btn.disabled=false; btn.replaceChildren("Prüfen lassen"); status.textContent=errText(e); }
+}
+async function analyseSpeech(btn,status){
+  const a=S.lastAudio; if(!a) return;
+  S.busy=true; btn.disabled=true; btn.replaceChildren(spinner(),"Hört zu und prüft …"); status.textContent="Das dauert meist 20 bis 60 Sekunden.";
+  try{ const b64=await blobToB64(a.blob);
+    const r=await gemini([{text:speakPrompt()},{inline_data:{mime_type:"audio/wav",data:b64}}],{temperature:0.2});
+    const text=String(r.transcript||"").trim(); if(!text) throw {code:"blocked"};
+    const s=buildSession(r,text,"speak");
+    const sp=[];
+    (Array.isArray(r.pronunciation)?r.pronunciation:[]).filter(p=>p&&p.word).forEach(p=>sp.push({original:String(p.word),severity:"speech",category:"pronunciation",
+      correction:p.target||"",heard:p.heard||"",explanation:p.explanation||"",tip:p.tip||"",pattern:String(p.pattern||"Aussprache").trim()}));
+    (Array.isArray(r.intonation)?r.intonation:[]).filter(p=>p&&p.phrase).forEach(p=>sp.push({original:String(p.phrase),severity:"speech",category:"intonation",
+      correction:"",explanation:p.explanation||"",tip:p.tip||"",pattern:String(p.pattern||"Betonung").trim()}));
+    s.issues=s.issues.concat(sp);
+    const sc=r.scores||{}; const cl=v=>{const n=Math.round(Number(v)); return n>=1&&n<=10?n:null;};
+    s.scores={pronunciation:cl(sc.pronunciation),intonation:cl(sc.intonation),fluency:cl(sc.fluency)}; s.speechVerdict=r.speech_verdict||""; s.seconds=Math.round(a.seconds);
+    await keepAudio(s.id,a.blob); URL.revokeObjectURL(a.url); S.lastAudio=null; await finish(s);
+  }catch(e){ S.busy=false; btn.disabled=false; btn.replaceChildren("Prüfen lassen"); status.textContent=errText(e); }
+}
+function phraseRegex(p){ const core=p.replace(/\(.*?\)/g," ").toLowerCase().replace(/\b(sb|sth|someone|something|one's|somebody)\b/g," ").replace(/[^a-z' ]/g," ").trim().split(/\s+/).filter(Boolean);
+  if(!core.length) return null; const esc=w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return new RegExp("\\b"+core.map(w=>esc(w.length>4?w.slice(0,w.length-2):w)+"[a-z']*").join("\\W+(?:\\w+\\W+)?")+"\\b","i"); }
+function markPhraseUse(text){ let ch=false; S.phrases.forEach((p,i)=>{ const re=phraseRegex(p.phrase||""); if(re&&re.test(text)){ S.phrases[i]=Object.assign({},p,{used:(p.used||0)+1,lastUsed:Date.now()}); ch=true; } }); if(ch) persist("phrases"); }
+
+/* ================= FEEDBACK ================= */
+let playerUrl=null;
+function feedbackView(s){
+  const {placed,unplaced}=locate(s.text,s.issues||[]);
+  const ms=h("div",{class:"manuscript"}); let pos=0;
+  placed.forEach(p=>{ if(p.start>pos) ms.append(s.text.slice(pos,p.start)); const it=s.issues[p.i];
+    ms.append(h("span",{class:"mk "+(it.disputed?"off":sevOf(it).c),role:"button",tabindex:"0","aria-label":sevOf(it).l+": "+it.original,
+      onclick:()=>openSheet(s,p.i),onkeydown:e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openSheet(s,p.i);}}},s.text.slice(p.start,p.end))); pos=p.end; });
+  ms.append(s.text.slice(pos));
+  const active=(s.issues||[]).filter(i=>!i.disputed); const n=k=>active.filter(i=>i.severity===k).length;
+  const lang=(s.issues||[]).map((it,i)=>[it,i]).filter(([it])=>it.severity!=="speech"), spk=(s.issues||[]).map((it,i)=>[it,i]).filter(([it])=>it.severity==="speech");
+  const row=([it,i])=>h("button",{class:"irow",onclick:()=>openSheet(s,i)},h("i",{class:"dot "+(it.disputed?"off":sevOf(it).c)}),
+    h("span",{class:"stack",style:"gap:2px;min-width:0"},
+      it.severity==="speech"?h("span",{class:"fix"},it.original,it.correction?h("span",{class:"ipa muted"},"  "+it.correction):null)
+        :h("span",{class:"fix"},h("s",null,it.original)," → ",h("b",null,it.correction||"(streichen)")),
+      h("span",{class:"pat"},(CAT[it.category]||"Stil")+" · "+it.pattern+(it.disputed?" · von dir als falsch markiert":""))));
+  const audioWrap=h("div");
+  if(s.mode==="speak"&&(S.profile.audioIds||[]).includes(s.id)) Store.get("audio:"+s.id).then(b=>{ if(b instanceof Blob){ if(playerUrl) URL.revokeObjectURL(playerUrl); playerUrl=URL.createObjectURL(b);
+    audioWrap.replaceChildren(h("span",{class:"eyebrow"},"Deine Aufnahme"),h("audio",{controls:true,src:playerUrl,style:"width:100%;margin-top:6px"})); } });
+  const sc=s.scores||{};
+  return h("div",{class:"stack",style:"gap:16px"},
+    h("div",{class:"row between"},h("button",{class:"linkbtn",onclick:()=>{S.openSession=null;render();}},"← Zurück"),
+      h("span",{class:"small muted"},fmtDT(s.ts)+" · "+(s.mode==="speak"?"Gesprochen":"Geschrieben")+" · "+(s.ctx==="business"?"Business":"Alltag"))),
+    h("section",{class:"panel"},
+      h("div",{class:"legend"},h("span",{class:"chip err"},n("error")+" Fehler"),h("span",{class:"chip unn"},n("unnatural")+" Unnatürlich"),h("span",{class:"chip upg"},n("upgrade")+" Upgrade"),
+        s.mode==="speak"?h("span",{class:"chip spk"},n("speech")+" Aussprache"):null),
+      h("p",{class:"verdict"},s.verdict||""),
+      !lang.length?h("div",{class:"ok"},"✓ Sprachlich klingt das natürlich."):null),
+    s.mode==="speak"?h("section",{class:"panel"},h("h3",null,"Aussprache & Betonung"),
+      h("div",{class:"scores"},[["pronunciation","Aussprache"],["intonation","Betonung"],["fluency","Flüssigkeit"]].map(([k,l])=>h("div",{class:"score"},h("b",null,sc[k]!=null?sc[k]+"/10":"–"),h("span",null,l)))),
+      s.speechVerdict?h("p",{class:"verdict"},s.speechVerdict):null,audioWrap):null,
+    h("section",{class:"panel"},h("div",{class:"eyebrow"},(s.mode==="speak"?"Was du gesagt hast":"Dein Text")+" · tipp auf eine Markierung"),ms,
+      unplaced.length?h("p",{class:"small muted"},unplaced.length+" Hinweis(e) ließen sich nicht genau im Text verorten (z. B. weil zwei Hinweise dasselbe Wort betreffen). Sie stehen in den Listen unten."):null),
+    lang.length?h("section",{class:"panel"},h("div",{class:"eyebrow"},"Sprache: alle Korrekturen"),h("div",{class:"ilist"},lang.map(row))):null,
+    spk.length?h("section",{class:"panel"},h("div",{class:"eyebrow"},"Aussprache und Betonung"),h("div",{class:"ilist"},spk.map(row))):null,
+    s.native?h("section",{class:"panel"},h("details",{class:"native"},h("summary",null,"So würde ein Native es sagen ▾"),h("p",null,s.native),
+      h("div",{style:"margin-top:10px"},h("button",{class:"btn quiet",onclick:()=>say(s.native)},"▶ Vorlesen")))):null,
+    h("div",{class:"row"},h("button",{class:"btn",onclick:()=>{S.openSession=null;render();}},"Neue Übung"),
+      s.task?h("button",{class:"btn ghost",onclick:()=>{S.openSession=null;S.mode=s.mode;S.ctx=s.ctx;S.customTask=s.task;ls("nc_draft","");render();}},"Gleiche Idee nochmal"):null));
+}
+
+/* ================= SHEET ================= */
+function closeSheet(){ document.querySelector(".scrim")?.remove(); document.querySelector(".sheet")?.remove(); try{speechSynthesis.cancel();}catch(e){} }
+function openSheet(s,i){ closeSheet(); const it=s.issues[i]; const sv=sevOf(it); const isSpeech=it.severity==="speech";
+  const ans=h("div",{class:"stack"}); const q=h("input",{type:"text",id:"askq",placeholder:"z. B. Warum ist mein Satz nicht okay?"});
+  const askBtn=h("button",{class:"btn quiet",onclick:async()=>{ if(!q.value.trim())return; askBtn.disabled=true; ans.replaceChildren(h("div",{class:"row small muted"},spinner(),"Denke nach …"));
+      try{ const r=await aiText(`A German-speaking C1 English learner ${s.mode==="speak"?"said (transcript)":"wrote"}: """${s.text}"""
+A coach flagged "${it.original}"${it.correction?` → "${it.correction}"`:""} (${it.explanation}). Standard: ${variantName()} English.
+The learner asks (answer in German, precise, max 120 words, give examples): ${q.value.trim()}
+If the learner has a point and the original is actually acceptable, say so honestly.
+Reply with ONLY JSON: {"answer":"..."}`); ans.replaceChildren(h("p",{class:"answer"},r.answer||"")); }
+      catch(e){ ans.replaceChildren(h("p",{class:"small"},errText(e))); } askBtn.disabled=false; }},"Fragen");
+  const saved=S.phrases.some(p=>p.fromSession===s.id&&p.fromIssue===i);
+  const saveBtn=isSpeech?null:h("button",{class:"btn",disabled:saved||null,onclick:async()=>{
+      await savePhrase({id:uid("p"),phrase:it.correction,original:it.original,meaning:it.explanation,example:it[s.ctx]||it.everyday||it.business||"",ctx:s.ctx,
+        source:"korrektur",fromSession:s.id,fromIssue:i,box:0,due:Date.now(),used:0,created:Date.now()});
+      saveBtn.disabled=true; saveBtn.textContent="In der Sammlung";}},saved?"In der Sammlung":"Zur Sammlung");
+  const disputeBtn=h("button",{class:"btn ghost",onclick:async()=>{ const o=clone(s); o.issues[i].disputed=!it.disputed; await saveSession(o); S.openSession=o; closeSheet(); render(); }},
+    it.disputed?"Wieder als gültig zählen":"Stimmt nicht");
+  const alts=[]; if(it.everyday) alts.push(h("span",{class:"chip"},"Alltag"),h("i",null,it.everyday)); if(it.business) alts.push(h("span",{class:"chip"},"Business"),h("i",null,it.business));
+  const head=isSpeech?h("p",{class:"fixline"},it.original,
+      it.category==="pronunciation"&&(it.heard||it.correction)?h("span",{class:"ipa",style:"display:block;font-size:1rem;margin-top:4px"},
+        it.heard?h("span",{class:"muted"},"gehört "+it.heard+"   "):null,it.correction?h("b",{style:"color:var(--spk)"},"Ziel "+it.correction):null):null)
+    :h("p",{class:"fixline"},h("s",null,it.original),"  →  ",h("b",null,it.correction||"(streichen)"));
+  const sheet=h("div",{class:"sheet",role:"dialog","aria-modal":"true","aria-label":"Korrektur"},h("div",{class:"in"},
+    h("div",{class:"grab"}),
+    h("div",{class:"row between"},h("div",{class:"row",style:"gap:6px"},h("span",{class:"chip "+sv.c},sv.l),(CAT[it.category]||"Stil")!==sv.l?h("span",{class:"chip"},CAT[it.category]||"Stil"):null),
+      h("button",{class:"linkbtn",onclick:closeSheet},"Schließen")),
+    head,
+    h("p",null,it.explanation),
+    isSpeech&&it.tip?h("div",{class:"box"},h("span",{class:"eyebrow"},"So geht's"),h("span",null,it.tip)):null,
+    it.rule?h("div",{class:"box"},h("span",{class:"eyebrow"},"Regel"),h("span",null,it.rule)):null,
+    it.germanism?h("div",{class:"box"},h("span",{class:"eyebrow"},"Typischer Germanismus"),h("span",null,it.germanism)):null,
+    alts.length?h("div",{class:"stack",style:"gap:6px"},h("span",{class:"eyebrow"},"So sagen es Natives"),h("div",{class:"alt"},alts)):null,
+    h("div",{class:"small muted"},"Muster: "+it.pattern),
+    h("div",{class:"row"},
+      isSpeech?h("button",{class:"btn",onclick:()=>say(it.original)},"▶ Richtig anhören"):h("button",{class:"btn quiet",onclick:()=>say(it.correction||it.original)},"▶ Anhören"),
+      saveBtn,disputeBtn),
+    h("div",{class:"stack",style:"gap:8px"},h("span",{class:"eyebrow"},"Nachfragen"),h("div",{class:"row",style:"flex-wrap:nowrap"},q,askBtn),ans)));
+  document.body.append(h("div",{class:"scrim",onclick:closeSheet}),sheet);
+  sheet.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();}); sheet.querySelector("button").focus({preventScroll:true});
+}
+
+/* ================= COLLECTION ================= */
+const INTERVAL=[0,1,3,7,16,35];
+function collectionView(){
+  const now=Date.now(); const due=S.phrases.filter(p=>(p.due||0)<=now&&(p.box||0)<5);
+  const used=S.phrases.filter(p=>(p.used||0)>0).length, mastered=S.phrases.filter(p=>(p.box||0)>=4).length;
+  const discoverOut=h("div",{class:"stack"}); if(S.discovered) discoverOut.append(idiomCard(S.discovered));
+  const dStatus=h("div",{class:"small",role:"status"});
+  const dBtn=h("button",{class:"btn ghost",onclick:async()=>{ dBtn.disabled=true; dBtn.replaceChildren(spinner(),"Suche …"); dStatus.textContent="";
+    try{ const have=S.phrases.map(p=>p.phrase).slice(-80).join("; ");
+      const r=await aiText(`Suggest ONE genuinely useful ${variantName()} English expression (idiom, phrasal verb or colloquial phrase) that a C1 learner moving to C2 probably doesn't use yet, for ${S.discoverCtx==="business"?"business / workplace":"everyday casual"} conversation. Natives must actually use it today (not old-fashioned). Avoid these: ${have||"none"}.
+Reply with ONLY JSON: {"phrase":"...","meaning":"German explanation, 1-2 sentences, including when to use it and register","example":"natural example sentence","example2":"second example in a different situation"}`,{temperature:0.9});
+      S.discovered=Object.assign({ctx:S.discoverCtx},r); discoverOut.replaceChildren(idiomCard(S.discovered)); }
+    catch(e){ dStatus.textContent=errText(e); } dBtn.disabled=false; dBtn.replaceChildren("Neue Redewendung"); }},"Neue Redewendung");
+  const trainBox=h("div",{class:"stack"});
+  if(S.trainer) trainBox.append(trainerCard()); else trainBox.append(
+    h("div",{class:"row between"},h("div",null,h("h3",null,"Training"),h("p",{class:"small muted"},due.length?due.length+" Wendung(en) fällig. Du benutzt sie in eigenen Sätzen.":"Gerade ist nichts fällig.")),
+      h("button",{class:"btn",disabled:!due.length||null,onclick:()=>{S.trainer={queue:due.slice(0,10).map(p=>p.id),i:0,done:0,right:0};render();}},"Starten")));
+  const filt=S.phrFilter; const shown=S.phrases.filter(p=>filt==="all"||(filt==="done"?(p.box||0)>=4:p.ctx===filt)).sort((a,b)=>(b.created||0)-(a.created||0));
+  return h("div",{class:"stack",style:"gap:16px"},
+    h("h2",null,"Deine Sammlung"),
+    h("div",{class:"stats3"},h("div",{class:"stat"},h("b",null,S.phrases.length),h("span",null,"gesammelt")),h("div",{class:"stat"},h("b",null,used),h("span",null,"selbst benutzt")),h("div",{class:"stat"},h("b",null,mastered),h("span",null,"gemeistert"))),
+    h("section",{class:"panel"},trainBox),
+    h("section",{class:"panel"},h("div",{class:"row between"},h("h3",null,"Wendung entdecken"),
+        h("div",{class:"seg"},[["everyday","Alltag"],["business","Business"]].map(([k,l])=>h("button",{"aria-pressed":String(S.discoverCtx===k),onclick:()=>{S.discoverCtx=k;render();}},l)))),
+      h("div",null,dBtn),dStatus,discoverOut),
+    h("section",{class:"panel"},
+      h("div",{class:"seg",style:"align-self:flex-start;flex-wrap:wrap"},[["all","Alle"],["everyday","Alltag"],["business","Business"],["done","Gemeistert"]].map(([k,l])=>h("button",{"aria-pressed":String(filt===k),onclick:()=>{S.phrFilter=k;render();}},l))),
+      shown.length?h("div",null,shown.map(phraseRow)):h("div",{class:"empty"},h("p",null,"Noch nichts hier."),h("p",{class:"small muted"},"Speichere Korrekturen mit „Zur Sammlung“ oder entdecke oben neue Redewendungen.")))
+  );}
+function idiomCard(d){ const exists=S.phrases.some(p=>(p.phrase||"").toLowerCase()===(d.phrase||"").toLowerCase());
+  const b=h("button",{class:"btn",disabled:exists||null,onclick:async()=>{ await savePhrase({id:uid("p"),phrase:d.phrase,meaning:d.meaning,example:d.example,example2:d.example2,ctx:d.ctx,source:"entdeckt",box:0,due:Date.now(),used:0,created:Date.now()}); b.disabled=true;b.textContent="Gespeichert";}},exists?"Gespeichert":"Speichern");
+  return h("div",{class:"idiom"},h("span",{class:"eyebrow"},d.ctx==="business"?"Business":"Alltag"),h("span",{class:"p"},d.phrase),h("p",null,d.meaning),
+    h("p",{class:"ex"},"„"+d.example+"“"),d.example2?h("p",{class:"ex"},"„"+d.example2+"“"):null,
+    h("div",{class:"row"},b,h("button",{class:"btn quiet",onclick:()=>say(d.phrase+". "+d.example)},"▶ Anhören"))); }
+function phraseRow(p){ const lv=h("span",{class:"lvl","aria-label":"Stufe "+(p.box||0)+" von 5"},[1,2,3,4,5].map(n=>h("i",{class:n<=(p.box||0)?"on":""})));
+  const del=h("button",{class:"linkbtn",onclick:async()=>{ if(del.dataset.arm){ await deletePhrase(p.id); render(); } else {del.dataset.arm="1";del.textContent="Wirklich löschen?";del.classList.add("danger");} }},"Löschen");
+  return h("div",{class:"phr"},h("div",{class:"row between"},h("button",{class:"p",style:"all:unset;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:1.08rem",onclick:()=>say(p.phrase)},p.phrase),lv),
+    p.original?h("span",{class:"small muted"},"statt: "+p.original):null,
+    h("span",{class:"small"},p.meaning),p.example?h("span",{class:"ex"},"„"+p.example+"“"):null,
+    h("div",{class:"row between small muted"},h("span",null,(p.ctx==="business"?"Business":"Alltag")+" · "+(p.used?p.used+"× selbst benutzt":"noch nicht selbst benutzt")),del)); }
+function trainerCard(){ const T=S.trainer; const p=S.phrases.find(x=>x.id===T.queue[T.i]);
+  if(T.i>=T.queue.length||!p){ if(T.i<T.queue.length){ T.i++; return trainerCard(); }
+    return h("div",{class:"stack"},h("h3",null,"Training fertig"),h("p",null,`${T.right} von ${T.done} richtig benutzt.`),h("div",null,h("button",{class:"btn",onclick:()=>{S.trainer=null;render();}},"Fertig"))); }
+  const inp=h("textarea",{id:"trainIn",style:"min-height:90px",placeholder:"Dein eigener Satz mit dieser Wendung …"});
+  const out=h("div",{class:"stack"}); const st=h("div",{class:"small",role:"status"});
+  const next=h("button",{class:"btn",hidden:true,onclick:()=>{T.i++;render();}},"Weiter");
+  const chk=h("button",{class:"btn",onclick:async()=>{ if(words(inp.value).length<3){st.textContent="Schreib einen ganzen Satz.";return;}
+    chk.disabled=true; chk.replaceChildren(spinner(),"Prüfe …"); st.textContent="";
+    try{ const r=await aiText(`A German-speaking C1 learner is practising the ${variantName()} English expression "${p.phrase}" (meaning: ${p.meaning}). They wrote: """${inp.value.trim()}"""
+Judge strictly but fairly. Reply with ONLY JSON: {"used":true or false (the expression is used, inflection allowed),"correct":true or false (used correctly and naturally and the sentence has no errors),"feedback":"German, 1-2 sentences","better":"natural corrected version of their sentence"}`,{temperature:0.2});
+      const ok=!!(r.used&&r.correct); T.done++; if(ok)T.right++;
+      const box=ok?Math.min(5,(p.box||0)+1):0; await savePhrase(Object.assign({},p,{box,due:Date.now()+(ok?INTERVAL[box]*DAY:12*36e5)}));
+      out.replaceChildren(h("div",{class:"ok",style:ok?"":"color:var(--err)"},ok?"✓ Sitzt.":"✗ Noch nicht ganz."),h("p",null,r.feedback||""),r.better?h("p",{style:"font-family:var(--f-display);font-style:italic"},"„"+r.better+"“"):null);
+      chk.hidden=true; next.hidden=false; }
+    catch(e){ st.textContent=errText(e); chk.disabled=false; chk.replaceChildren("Prüfen"); } }},"Prüfen");
+  return h("div",{class:"stack"},h("div",{class:"row between"},h("span",{class:"eyebrow"},`Training · ${T.i+1} / ${T.queue.length}`),h("button",{class:"linkbtn",onclick:()=>{S.trainer=null;render();}},"Beenden")),
+    h("div",{class:"idiom"},h("span",{class:"p"},p.phrase),h("p",{class:"small"},p.meaning)),
+    h("p",{class:"small muted"},"Benutze die Wendung in einem eigenen Satz, am besten über dein echtes Leben."),inp,h("div",{class:"row"},chk,next),st,out); }
+
+/* ================= PROGRESS ================= */
+function weekStart(ts){const d=new Date(ts);d.setHours(0,0,0,0);const wd=(d.getDay()+6)%7;return d.getTime()-wd*DAY;}
+function lastWeeks(n){const w0=weekStart(Date.now());return Array.from({length:n},(_,i)=>w0-(n-1-i)*7*DAY);}
+const langCounted=s=>(s.issues||[]).filter(i=>!i.disputed&&(i.severity==="error"||i.severity==="unnatural"));
+const patCounted=s=>(s.issues||[]).filter(i=>!i.disputed&&i.severity!=="upgrade");
+function patternStats(){ const m=new Map(); const weeks=lastWeeks(6); const now=Date.now();
+  [...S.sessions].sort((a,b)=>a.ts-b.ts).forEach(s=>patCounted(s).forEach(i=>{ const k=(i.severity==="speech"?"s:":"l:")+i.pattern.toLowerCase();
+    if(!m.has(k)) m.set(k,{key:k,label:i.pattern,speech:i.severity==="speech",first:s.ts,last:s.ts,total:0,write:0,speak:0,weekly:weeks.map(()=>0),examples:[]});
+    const p=m.get(k); p.total++; p.last=s.ts; p[s.mode==="speak"?"speak":"write"]++; const wi=weeks.indexOf(weekStart(s.ts)); if(wi>=0)p.weekly[wi]++;
+    if(p.examples.length<3) p.examples.push(i.severity==="speech"?(i.original+(i.correction?" "+i.correction:"")):(i.original+" → "+i.correction)); }));
+  const vol=(a,b,speechOnly)=>S.sessions.filter(s=>s.ts>=a&&s.ts<b&&(!speechOnly||s.mode==="speak")).reduce((t,s)=>t+(s.wordCount||0),0);
+  return [...m.values()].map(p=>{ const since=S.sessions.filter(s=>s.ts>p.last&&(!p.speech||s.mode==="speak")).length;
+    const cnt=(a,b)=>S.sessions.filter(s=>s.ts>=a&&s.ts<b).reduce((t,s)=>t+patCounted(s).filter(i=>((i.severity==="speech"?"s:":"l:")+i.pattern.toLowerCase())===p.key).length,0);
+    const rRecent=cnt(now-14*DAY,now)/Math.max(1,vol(now-14*DAY,now,p.speech)), rPrev=cnt(now-28*DAY,now-14*DAY)/Math.max(1,vol(now-28*DAY,now-14*DAY,p.speech));
+    let st; if(now-p.last>21*DAY&&since>=3) st=["done","Gemeistert"]; else if(now-p.first<7*DAY) st=["new","Neu erkannt"];
+    else if(rPrev>0&&rRecent<rPrev*0.7) st=["impr","In Verbesserung"]; else st=["train","Im Training"];
+    return Object.assign(p,{status:st,recent:cnt(now-14*DAY,now)}); })
+   .filter(p=>p.total>=2||now-p.last<14*DAY)
+   .sort((a,b)=>({train:0,new:1,impr:2,done:3}[a.status[0]]-{train:0,new:1,impr:2,done:3}[b.status[0]])||b.recent-a.recent||b.total-a.total); }
+const OVER=["very","really","good","bad","important","thing","things","nice","big","get","got","a lot","so","just"];
+function overused(from,to){ const all=S.sessions.filter(s=>s.ts>=from&&s.ts<to).map(s=>s.text.toLowerCase()).join(" "); const total=words(all).length;
+  return {total,list:OVER.map(w=>({w,n:(all.match(new RegExp("\\b"+w+"\\b","g"))||[]).length})).map(o=>Object.assign(o,{per:total?o.n/total*1000:0}))}; }
+function variety(from,to){ const toks=words(S.sessions.filter(s=>s.ts>=from&&s.ts<to).map(s=>s.text).join(" ").toLowerCase()); if(toks.length<100) return null;
+  let sum=0,n=0; for(let i=0;i+100<=toks.length;i+=100){ sum+=new Set(toks.slice(i,i+100)).size; n++; } return sum/n; }
+function lineChart(series,labels,{max,fmt}={}){ const W=320,H=140,L=30,R=8,T=10,B=22; const all=series.flatMap(s=>s.vals.filter(v=>v!=null));
+  const top=max!=null?max:Math.max(1,Math.ceil(Math.max(0,...all)*1.15)); const x=i=>L+(W-L-R)*(labels.length<2?0.5:i/(labels.length-1)); const y=v=>T+(H-T-B)*(1-v/top);
+  let g=""; [0,.5,1].forEach(f=>{const v=top*f; g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${fmt?fmt(v):Math.round(v*10)/10}</text>`;});
+  labels.forEach((l,i)=>{ if(i%2===1||labels.length<=4) g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${l}</text>`;});
+  series.forEach(s=>{ const pts=s.vals.map((v,i)=>v==null?null:[x(i),y(v)]); let d="",pen=false; pts.forEach(p=>{ if(!p){pen=false;return;} d+=(pen?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1); pen=true;});
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    pts.forEach((p,i)=>{ if(p) g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?3.6:2.4}" fill="${s.color}"/>`;}); });
+  return h("div",{html:`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`}); }
+
+function progressView(){
+  const ss=S.sessions; const now=Date.now();
+  if(!ss.length) return h("div",{class:"stack",style:"gap:16px"},h("h2",null,"Dein Fortschritt"),
+    h("section",{class:"panel empty"},h("h3",null,"Noch keine Daten"),h("p",{class:"muted"},"Sobald du deine erste Übung prüfen lässt, siehst du hier Aktivität, Fehlerquote, Aussprache-Werte, deine Problemfelder und eine persönliche Einschätzung."),
+      h("button",{class:"btn",onclick:()=>setTab("practice")},"Erste Übung starten")));
+  const weeks=lastWeeks(8), lbl=weeks.map(w=>fmtDate(w).replace(/\.$/,""));
+  const wk=(w,mode)=>{const xs=ss.filter(s=>weekStart(s.ts)===w&&(!mode||s.mode===mode)); const wds=xs.reduce((t,s)=>t+(s.wordCount||0),0); return {xs,wds,err:xs.reduce((t,s)=>t+langCounted(s).length,0)};};
+  const rate=(w,m)=>{const r=wk(w,m); return r.wds?r.err/r.wds*100:null;};
+  const avgScore=(xs,k)=>{const v=xs.map(s=>s.scores&&s.scores[k]).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const thisW=wk(weeks[7]);
+  const range=(a,b)=>{const xs=ss.filter(s=>s.ts>=a&&s.ts<b);const wds=xs.reduce((t,s)=>t+(s.wordCount||0),0);const sp=xs.filter(s=>s.mode==="speak");
+    return {n:xs.length,wds,rate:wds?xs.reduce((t,s)=>t+langCounted(s).length,0)/wds*100:null,nat:xs.length?xs.reduce((t,s)=>t+(s.natural||0),0)/xs.length:null,
+      cx:xs.length?xs.reduce((t,s)=>t+(s.complexity||3),0)/xs.length:null,idi:xs.reduce((t,s)=>t+(s.idioms||[]).length,0),
+      pron:avgScore(sp,"pronunciation"),into:avgScore(sp,"intonation"),flu:avgScore(sp,"fluency"),speakMin:sp.reduce((t,s)=>t+(s.seconds||0),0)/60};};
+  const r30=range(now-30*DAY,now), p30=range(now-60*DAY,now-30*DAY);
+  const days=new Set(ss.map(s=>{const d=new Date(s.ts);d.setHours(0,0,0,0);return d.getTime();})); let streak=0; const d0=new Date();d0.setHours(0,0,0,0); let t=d0.getTime(); if(!days.has(t)) t-=DAY; while(days.has(t)){streak++;t-=DAY;}
+  const delta=(a,b,lowerBetter,unit)=>{ if(a==null||b==null) return null; const diff=a-b; const good=lowerBetter?diff<0:diff>0; return h("span",{style:`color:${Math.abs(diff)<0.05?"var(--muted)":good?"var(--upg)":"var(--err)"}`},(diff>0?"+":"")+diff.toFixed(1)+(unit||"")+" ggü. Vormonat"); };
+  const tile=(big,small,sub)=>h("div",{class:"stat"},h("b",null,big),h("span",null,small),sub?h("span",{class:"small"},sub):null);
+  const heat=h("div",{class:"heat"}); const wd=["Mo","Di","Mi","Do","Fr","Sa","So"]; const perDay={}; ss.forEach(s=>{const d=new Date(s.ts);d.setHours(0,0,0,0);perDay[d.getTime()]=(perDay[d.getTime()]||0)+(s.wordCount||0);});
+  wd.forEach((n,di)=>{ heat.append(h("span",null,di%2===0?n:"")); weeks.forEach(w=>{const tt=w+di*DAY; const v=perDay[tt]||0; heat.append(h("i",{class:tt>now?"":v>250?"l3":v>100?"l2":v>0?"l1":"",title:fmtDate(tt)+": "+v+" Wörter"}));});});
+  const pats=patternStats(); const oNow=overused(now-30*DAY,now), oPrev=overused(now-60*DAY,now-30*DAY);
+  const over=oNow.list.filter(o=>o.per>=4).sort((a,b)=>b.per-a.per).slice(0,5);
+  const vNow=variety(now-30*DAY,now), vPrev=variety(now-60*DAY,now-30*DAY);
+  const hasSpeak=ss.some(s=>s.mode==="speak"&&s.scores);
+  const assessOut=h("div",{class:"stack"}); const aSt=h("div",{class:"small",role:"status"});
+  if(S.profile.assessment) assessOut.append(h("span",{class:"small muted"},"Stand "+fmtDT(S.profile.assessment.ts)),h("p",{class:"assess"},S.profile.assessment.text));
+  else assessOut.append(h("p",{class:"muted"},"Lass dir eine ehrliche Einschätzung erstellen: wo du stehst, was deine größte Baustelle ist und was der nächste Hebel Richtung C2 ist."));
+  const aBtn=h("button",{class:"btn",onclick:async()=>{ aBtn.disabled=true;aBtn.replaceChildren(spinner(),"Analysiere …");aSt.textContent="Das kann bis zu einer Minute dauern.";
+    try{ const summary={sessions_total:ss.length,words_total:ss.reduce((t2,s)=>t2+(s.wordCount||0),0),last30:r30,prev30:p30,
+        weekly_language_error_rate_per100:{writing:weeks.map(w=>rate(w,"write")),speaking:weeks.map(w=>rate(w,"speak"))},
+        weekly_speech_scores:weeks.map(w=>{const xs=wk(w,"speak").xs; return {pron:avgScore(xs,"pronunciation"),into:avgScore(xs,"intonation"),flu:avgScore(xs,"fluency")};}),
+        problem_areas:pats.slice(0,12).map(p=>({pattern:p.label,type:p.speech?"pronunciation/intonation":"language",status:p.status[1],total:p.total,writing:p.write,speaking:p.speak,last14days:p.recent,examples:p.examples})),
+        overused_words_per1000:over.map(o=>({word:o.w,per1000:+o.per.toFixed(1)})),lexical_variety:{now:vNow,before:vPrev},
+        phrases_collected:S.phrases.length,phrases_used_themselves:S.phrases.filter(p=>p.used).length,
+        recent_texts:ss.slice(0,3).map(s=>({mode:s.mode,ctx:s.ctx,text:s.text.slice(0,700)}))};
+      const r=await aiText(`You are an experienced English coach (C1→C2, ${variantName()} English) for a German speaker living in Switzerland who practises everyday and business English, written and spoken. Here is their progress data as JSON:
+${JSON.stringify(summary)}
+Write an honest, specific assessment in German, 170-250 words, addressing them as "du". Use these plain-text headings on their own lines: "Wo du stehst", "Größte Baustelle", "Aussprache und Betonung" (only if there is speaking data), "Was besser geworden ist", "Nächster Hebel Richtung C2". Mention concrete patterns and examples from the data. Don't sugarcoat; say if there is too little data for a reliable judgement. A rising error rate can come from more ambitious language if complexity also rose.
+Reply with ONLY JSON: {"text":"..."}`,{temperature:0.4});
+      await saveProfile({assessment:{text:r.text||"",ts:Date.now()}}); render(); }
+    catch(e){ aSt.textContent=errText(e); aBtn.disabled=false; aBtn.replaceChildren(S.profile.assessment?"Neu einschätzen":"Einschätzung erstellen"); } }},S.profile.assessment?"Neu einschätzen":"Einschätzung erstellen");
+  const pcards=pats.length?pats.slice(0,14).map(p=>{ const mx=Math.max(1,...p.weekly); const st=h("div",{class:"small",role:"status"});
+      const b=h("button",{class:"btn ghost",onclick:async()=>{ b.disabled=true;b.replaceChildren(spinner(),"Erstelle Aufgabe …");
+        try{ const r=await aiText(p.speech
+            ?`Create a short speaking exercise (instructions in German) for a German-speaking C1 English learner who keeps having this pronunciation/intonation problem: "${p.label}". Past examples: ${p.examples.join("; ")}. Target accent: ${accentName()}. Give 3-4 natural English sentences to read aloud that contain the sound or pattern many times, then one short free-speaking question that will make them use it. Reply with ONLY JSON: {"task":"German instruction followed by the English sentences and the question, as one string with line breaks"}`
+            :`Create one short writing/speaking task (in German, 1-2 sentences) for a German-speaking C1 English learner that naturally forces them to use the structure they keep getting wrong: "${p.label}". Their past mistakes: ${p.examples.join("; ")}. Don't reveal the answer. Reply with ONLY JSON: {"task":"..."}`,{temperature:0.7});
+          S.customTask=r.task; S.scenIdx=null; S.openSession=null; if(p.speech){S.mode="speak";ls("nc_mode","speak");} setTab("practice"); }
+        catch(e){ st.textContent=errText(e); b.disabled=false; b.replaceChildren("Gezielt üben"); } }},"Gezielt üben");
+      return h("div",{class:"pcard"},h("div",{class:"row between",style:"flex-wrap:nowrap;align-items:flex-start"},h("span",{class:"name"},p.label),h("span",{class:"status st-"+p.status[0]},p.status[1])),
+        h("span",{class:"small muted"},(p.speech?"Aussprache · ":"Sprache · ")+`seit ${fmtDate(p.first)} · ${p.total}×`+(p.speech?"":` · Schreiben ${p.write} · Sprechen ${p.speak}`)),
+        h("div",{class:"bars"+(p.speech?" spk":""),"aria-label":"Vorkommen pro Woche, letzte 6 Wochen"},p.weekly.map(v=>h("i",{class:v?"":"zero",style:`height:${Math.max(6,v/mx*100)}%`,title:v+"×"}))),
+        h("span",{class:"small muted"},"Vorkommen pro Woche, letzte 6 Wochen"),
+        p.examples.length?h("span",{class:"small"+(p.speech?" ipa":""),style:"font-family:var(--f-display);font-style:italic"},p.examples[0]):null,
+        p.status[0]!=="done"?h("div",null,b):null,st); }):[h("p",{class:"muted"},"Problemfelder erscheinen, sobald sich Fehler wiederholen.")];
+  return h("div",{class:"stack",style:"gap:16px"},
+    h("h2",null,"Dein Fortschritt"),
+    h("div",{class:"tiles"},tile(thisW.xs.length,"Übungen diese Woche",thisW.wds+" Wörter"),tile(streak,streak===1?"Tag in Folge":"Tage in Folge"),
+      tile(r30.rate==null?"–":r30.rate.toFixed(1),"Fehler pro 100 Wörter (30 Tage)",delta(r30.rate,p30.rate,true)),
+      tile(r30.nat==null?"–":Math.round(r30.nat*100)+" %","Sätze klingen natürlich",delta(r30.nat==null?null:r30.nat*100,p30.nat==null?null:p30.nat*100,false," %"))),
+    h("section",{class:"panel"},h("h3",null,"Aktivität"),h("p",{class:"small muted"},"Letzte 8 Wochen, Farbe nach geschriebenen oder gesprochenen Wörtern"),heat),
+    h("section",{class:"panel"},h("h3",null,"Fehler pro 100 Wörter"),h("p",{class:"small muted"},"Fehler und unnatürliche Stellen, ohne Upgrades, Aussprache und von dir angefochtene"),
+      lineChart([{color:"var(--accent)",vals:weeks.map(w=>rate(w,"write"))},{color:"var(--unn)",vals:weeks.map(w=>rate(w,"speak"))}],lbl,{}),
+      h("div",{class:"key"},h("span",null,h("i",{style:"background:var(--accent)"}),"Schreiben"),h("span",null,h("i",{style:"background:var(--unn)"}),"Sprechen"))),
+    hasSpeak?h("section",{class:"panel"},h("h3",null,"Aussprache, Betonung, Flüssigkeit"),h("p",{class:"small muted"},"Wochendurchschnitt der Bewertungen, 1 bis 10"),
+      lineChart([{color:"var(--spk)",vals:weeks.map(w=>avgScore(wk(w,"speak").xs,"pronunciation"))},{color:"var(--accent)",vals:weeks.map(w=>avgScore(wk(w,"speak").xs,"intonation"))},{color:"var(--unn)",vals:weeks.map(w=>avgScore(wk(w,"speak").xs,"fluency"))}],lbl,{max:10,fmt:v=>Math.round(v)}),
+      h("div",{class:"key"},h("span",null,h("i",{style:"background:var(--spk)"}),"Aussprache"),h("span",null,h("i",{style:"background:var(--accent)"}),"Betonung"),h("span",null,h("i",{style:"background:var(--unn)"}),"Flüssigkeit")),
+      h("div",{class:"mrow"},h("span",null,"Gesprochen (30 Tage)"),h("span",null,r30.speakMin<1?Math.round(r30.speakMin*60)+" Sek.":Math.round(r30.speakMin)+" Min."))):null,
+    h("section",{class:"panel"},h("h3",null,"Was du dich traust"),h("p",{class:"small muted"},"Weniger Fehler zählen nur, wenn du dich nicht zurückhältst."),
+      h("div",null,
+        h("div",{class:"mrow"},h("span",null,"Sprachliche Komplexität (1–5)"),h("span",null,(r30.cx?r30.cx.toFixed(1):"–")+(p30.cx?"  ·  vorher "+p30.cx.toFixed(1):""))),
+        h("div",{class:"mrow"},h("span",null,"Wortvielfalt (verschiedene Wörter pro 100)"),h("span",null,(vNow?vNow.toFixed(0):"zu wenig Text")+(vPrev?"  ·  vorher "+vPrev.toFixed(0):""))),
+        h("div",{class:"mrow"},h("span",null,"Redewendungen richtig benutzt (30 Tage)"),h("span",null,r30.idi+(p30.n?"  ·  vorher "+p30.idi:""))),
+        h("div",{class:"mrow"},h("span",null,"Gesammelte Wendungen selbst benutzt"),h("span",null,S.phrases.filter(p=>p.used).length+" von "+S.phrases.length)))),
+    h("section",{class:"stack"},h("h3",null,"Deine Problemfelder"),pcards),
+    h("section",{class:"panel"},h("h3",null,"Lieblingswörter"),h("p",{class:"small muted"},"Wörter, die du oft benutzt, pro 1000 Wörter (30 Tage). Hier lohnt sich mehr Vielfalt."),
+      over.length?h("div",null,over.map(o=>{const pv=oPrev.list.find(x=>x.w===o.w); return h("div",{class:"mrow"},h("span",{style:"font-family:var(--f-display);font-weight:600"},o.w),h("span",null,o.per.toFixed(1)+(oPrev.total?"  ·  vorher "+pv.per.toFixed(1):"")));})):h("p",{class:"small"},"Nichts Auffälliges. Gut so.")),
+    h("section",{class:"panel"},h("h3",null,"Persönliche Einschätzung"),assessOut,h("div",null,aBtn),aSt));
+}
+
+/* ================= boot ================= */
+async function boot(){
+  render();
+  await Store.open();
+  const [ss,ph,pr]=await Promise.all([Store.get("sessions"),Store.get("phrases"),Store.get("profile")]);
+  if(Array.isArray(ss)) S.sessions=ss.sort((a,b)=>b.ts-a.ts); if(Array.isArray(ph)) S.phrases=ph; if(pr) S.profile=Object.assign(S.profile,pr);
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  const b=$("#banners"); b.replaceChildren();
+  if(!Store.db) b.append(h("div",{class:"banner"},"Dein Browser erlaubt hier keine Datenbank. Übungen werden eingeschränkt gespeichert, Aufnahmen gar nicht."));
+  if(location.protocol==="file:") b.append(h("div",{class:"banner"},"Die App läuft als lokale Datei. Für Mikrofon und Homescreen musst du sie über https öffnen (siehe Anleitung)."));
+  render();
+  if("serviceWorker" in navigator&&location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+window.addEventListener("pageshow",e=>{ if(e.persisted) render(); });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden&&S.rec){ /* keep recording; iOS may pause it */ } });
+boot();
+})();
+</script>
+</body>
+</html>
